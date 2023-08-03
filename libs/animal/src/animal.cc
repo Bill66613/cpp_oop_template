@@ -14,5 +14,5 @@ Animal::~Animal()
 
 void Animal::Greet()
 {
-  std::cout << "From " << name_ << " with love" << std::endl;
+  std::cout << "From " << name_ << " with love <3" << std::endl;
 }

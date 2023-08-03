@@ -11,6 +11,7 @@
 
 #include <iostream>
 
+#include <helper/helper.hh>
 #include <helper/safe_queue.hh>
 #include <animal/animal.hh>
 #include <sqlite/sqlite.hh>
@@ -19,9 +20,13 @@
 #define PROJECT_NAME "Test Project"
 #endif
 
+#ifndef PROJECT_VERSION
+#define PROJECT_VERSION "0.0.0"
+#endif
+
 void InitializeProject()
 {
-  std::cout << "\n===================" << PROJECT_NAME << "===================\n" << std::endl;
+  std::cout << "\n===================" << PROJECT_NAME << " " << PROJECT_VERSION << "===================\n" << std::endl;
 }
 
 int main(int argc, char const *argv[])
@@ -32,5 +37,6 @@ int main(int argc, char const *argv[])
 
   SQLiteTest();
 
+  SingletonTest();
   return 0;
 }

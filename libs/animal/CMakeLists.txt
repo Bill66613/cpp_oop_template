@@ -15,7 +15,7 @@ set(LIBRARY_SOURCE
     ${LIBRARY_SOURCE_DIR}/animal.cc
 )
 
-add_library(${LIBRARY_NAME} STATIC
+add_library(${LIBRARY_NAME} SHARED
     ${LIBRARY_HEADERS}
     ${LIBRARY_SOURCE}
 )
@@ -31,3 +31,5 @@ target_include_directories(${LIBRARY_NAME} PUBLIC
 )
 
 # add_subdirectory(test)
+set(LIB_DIR /home/nog6hc/workspace/testing/cpp_oop_template/build)
+install (TARGETS ${LIBRARY_NAME} LIBRARY DESTINATION ${LIB_DIR})
