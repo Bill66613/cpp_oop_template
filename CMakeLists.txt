@@ -1,5 +1,5 @@
 
-cmake_minimum_required (VERSION 3.0)
+cmake_minimum_required (VERSION 4.0)
 SET(CMAKE_C_COMPILER_WORKS TRUE)
 cmake_policy(SET CMP0048 NEW)
 set(PROJECT_NAME "Test Cpp")
