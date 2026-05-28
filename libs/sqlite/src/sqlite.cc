@@ -2,6 +2,7 @@
 #include <memory>
 #include <string>
 
+#include <sqlite3.h>
 #include "sqlite.hh"
 
 /*

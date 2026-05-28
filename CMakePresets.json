@@ -18,6 +18,7 @@
     {
       "name": "base-native",
       "hidden": true,
+      "generator": "Ninja",
       "binaryDir": "${sourceDir}/build/${presetName}",
       "cacheVariables": {
         "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
@@ -88,12 +89,6 @@
         "VCPKG_CHAINLOAD_TOOLCHAIN_FILE": "${sourceDir}/cmake/toolchains/linux-aarch64-gcc.cmake",
         "VCPKG_TARGET_TRIPLET": "arm64-linux"
       }
-    },
-    {
-      "name": "default",
-      "inherits": "native-windows-local",
-      "displayName": "Default",
-      "description": "Default preset for the current checked-in dependency layout on Windows."
     }
   ],
   "buildPresets": [
@@ -132,11 +127,6 @@
     {
       "name": "linux-aarch64-vcpkg-release",
       "configurePreset": "linux-aarch64-vcpkg-release"
-    },
-    {
-      "name": "default",
-      "configurePreset": "default",
-      "configuration": "Debug"
     }
   ]
 }
