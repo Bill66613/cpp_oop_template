@@ -1,91 +1,70 @@
-/**
- * @file SafeQueue.hh
- * @author your name (you@domain.com)
- * @brief
- * @version 0.1
- * @date 2022-06-23
- *
- * @copyright Copyright (c) 2022
- *
- */
+#pragma once
 
-#ifndef SAFE_QUEUE
-#define SAFE_QUEUE
-
-#include <queue>
-#include <mutex>
 #include <condition_variable>
+#include <mutex>
+#include <optional>
+#include <queue>
 
-// A threadsafe-queue.
+// A thread-safe FIFO queue.
+//
+// push()        — enqueue and wake one waiting consumer
+// try_pop()     — dequeue without blocking; returns std::nullopt if empty
+// wait_and_pop()— block until an element is available, then dequeue
+// empty() / size() — snapshot queries (consistent under the internal lock)
 template <class T>
 class SafeQueue
 {
-private:
-  std::queue<T> q;
-  mutable std::mutex m;
-  std::condition_variable c;
-
 public:
-  SafeQueue(void)
-  : q()
-  , m()
-  , c()
-  {}
+  SafeQueue() = default;
+  ~SafeQueue() = default;
 
-  ~SafeQueue(void)
-  {}
+  SafeQueue(const SafeQueue&) = delete;
+  SafeQueue& operator=(const SafeQueue&) = delete;
 
   bool empty() const
   {
-    return q.empty();
+    std::lock_guard<std::mutex> lock(m_);
+    return q_.empty();
   }
 
-  unsigned long size() const
+  std::size_t size() const
   {
-    std::lock_guard<std::mutex> lock(m);
-    return q.size();
+    std::lock_guard<std::mutex> lock(m_);
+    return q_.size();
   }
 
-  T front()
+  void push(T value)
   {
-    std::lock_guard<std::mutex> lock(m);
-    if (q.empty())
     {
-      return {};
+      std::lock_guard<std::mutex> lock(m_);
+      q_.push(std::move(value));
     }
-    T tmp = q.front();
+    cv_.notify_one();
+  }
+
+  // Non-blocking dequeue. Returns std::nullopt when the queue is empty.
+  std::optional<T> try_pop()
+  {
+    std::lock_guard<std::mutex> lock(m_);
+    if (q_.empty())
+      return std::nullopt;
+    T tmp = std::move(q_.front());
+    q_.pop();
     return tmp;
   }
 
-  T back()
+  // Blocking dequeue. Suspends the caller until an element is available.
+  T wait_and_pop()
   {
-    std::lock_guard<std::mutex> lock(m);
-    if (q.empty())
-    {
-      return {};
-    }
-    T tmp = q.back();
+    std::unique_lock<std::mutex> lock(m_);
+    cv_.wait(lock, [this] { return !q_.empty(); });
+    T tmp = std::move(q_.front());
+    q_.pop();
     return tmp;
   }
 
-  void push(T t)
-  {
-    std::lock_guard<std::mutex> lock(m);
-    q.push(t);
-    c.notify_one();
-  }
-
-  T pop()
-  {
-    std::lock_guard<std::mutex> lock(m);
-    if (q.empty())
-    {
-      return {};
-    }
-    T tmp = q.front();
-    q.pop();
-    return tmp;
-  }
+private:
+  std::queue<T>           q_;
+  mutable std::mutex      m_;
+  std::condition_variable cv_;
 };
-
-#endif

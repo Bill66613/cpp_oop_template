@@ -1,9 +1,7 @@
 
 cmake_minimum_required(VERSION 4.0.0)
 
-set(PROJECT_NAME helper)
-
-project(${PROJECT_NAME})
+project(helper LANGUAGES CXX)
 
 set(LIBRARY_NAME helper)
 
@@ -20,6 +18,10 @@ add_library(${LIBRARY_NAME} STATIC
     ${LIBRARY_SOURCE}
 )
 
+if(TARGET project_warnings)
+    target_link_libraries(${LIBRARY_NAME} PRIVATE project_warnings)
+endif()
+
 target_include_directories(${LIBRARY_NAME} PRIVATE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/${LIBRARY_NAME}>
     $<INSTALL_INTERFACE:include/${LIBRARY_NAME}>
@@ -27,7 +29,8 @@ target_include_directories(${LIBRARY_NAME} PRIVATE
 
 target_include_directories(${LIBRARY_NAME} PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:include>
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
 
-# add_subdirectory(test)
+install(TARGETS ${LIBRARY_NAME} ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
+install(DIRECTORY include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})

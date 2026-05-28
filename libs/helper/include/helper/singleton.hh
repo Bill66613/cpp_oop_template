@@ -1,8 +1,5 @@
 #pragma once
 
-#include <mutex>
-#include <string>
-
 template <typename T>
 class Singleton
 {

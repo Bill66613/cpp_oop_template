@@ -4,7 +4,7 @@
 #include "animal.hh"
 
 Animal::Animal(std::string name)
-    : name_(name)
+    : name_(std::move(name))
 {
 }
 

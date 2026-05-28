@@ -1,0 +1,142 @@
+{
+  "version": 6,
+  "cmakeMinimumRequired": {
+    "major": 4,
+    "minor": 0,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "base-ninja",
+      "hidden": true,
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "cacheVariables": {
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+      }
+    },
+    {
+      "name": "base-native",
+      "hidden": true,
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "cacheVariables": {
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+      }
+    },
+    {
+      "name": "native-windows-local",
+      "inherits": "base-native",
+      "displayName": "Native Windows (repo-local deps)",
+      "description": "Builds on Windows using the repo-local vcpkg_installed tree.",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "VCPKG_TARGET_TRIPLET": "x64-windows"
+      }
+    },
+    {
+      "name": "native-windows-vcpkg",
+      "inherits": "base-native",
+      "displayName": "Native Windows (vcpkg manifest)",
+      "description": "Builds on Windows through the vcpkg toolchain. Requires VCPKG_ROOT.",
+      "toolchainFile": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "VCPKG_TARGET_TRIPLET": "x64-windows"
+      }
+    },
+    {
+      "name": "native-linux-local-debug",
+      "inherits": "base-ninja",
+      "displayName": "Native Linux Debug (local deps)",
+      "description": "Builds on Linux using packages discoverable through CMAKE_PREFIX_PATH or a repo-local vcpkg_installed tree.",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "VCPKG_TARGET_TRIPLET": "x64-linux"
+      }
+    },
+    {
+      "name": "native-linux-vcpkg-debug",
+      "inherits": "base-ninja",
+      "displayName": "Native Linux Debug (vcpkg manifest)",
+      "description": "Builds on Linux through the vcpkg toolchain. Requires VCPKG_ROOT.",
+      "toolchainFile": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "VCPKG_TARGET_TRIPLET": "x64-linux"
+      }
+    },
+    {
+      "name": "mingw-w64-vcpkg-release",
+      "inherits": "base-ninja",
+      "displayName": "MinGW-w64 Release (cross)",
+      "description": "Cross-compiles to Windows using a MinGW-w64 toolchain chained through vcpkg. Requires VCPKG_ROOT and MINGW_W64_ROOT.",
+      "toolchainFile": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "VCPKG_CHAINLOAD_TOOLCHAIN_FILE": "${sourceDir}/cmake/toolchains/mingw-w64-x86_64.cmake",
+        "VCPKG_TARGET_TRIPLET": "x64-mingw-dynamic"
+      }
+    },
+    {
+      "name": "linux-aarch64-vcpkg-release",
+      "inherits": "base-ninja",
+      "displayName": "Linux aarch64 Release (cross)",
+      "description": "Cross-compiles to Linux aarch64 using a GCC sysroot chained through vcpkg. Requires VCPKG_ROOT, AARCH64_GNU_ROOT, and AARCH64_SYSROOT.",
+      "toolchainFile": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "VCPKG_CHAINLOAD_TOOLCHAIN_FILE": "${sourceDir}/cmake/toolchains/linux-aarch64-gcc.cmake",
+        "VCPKG_TARGET_TRIPLET": "arm64-linux"
+      }
+    },
+    {
+      "name": "default",
+      "inherits": "native-windows-local",
+      "displayName": "Default",
+      "description": "Default preset for the current checked-in dependency layout on Windows."
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "native-windows-local-debug",
+      "configurePreset": "native-windows-local",
+      "configuration": "Debug"
+    },
+    {
+      "name": "native-windows-local-release",
+      "configurePreset": "native-windows-local",
+      "configuration": "Release"
+    },
+    {
+      "name": "native-windows-vcpkg-debug",
+      "configurePreset": "native-windows-vcpkg",
+      "configuration": "Debug"
+    },
+    {
+      "name": "native-windows-vcpkg-release",
+      "configurePreset": "native-windows-vcpkg",
+      "configuration": "Release"
+    },
+    {
+      "name": "native-linux-local-debug",
+      "configurePreset": "native-linux-local-debug"
+    },
+    {
+      "name": "native-linux-vcpkg-debug",
+      "configurePreset": "native-linux-vcpkg-debug"
+    },
+    {
+      "name": "mingw-w64-vcpkg-release",
+      "configurePreset": "mingw-w64-vcpkg-release"
+    },
+    {
+      "name": "linux-aarch64-vcpkg-release",
+      "configurePreset": "linux-aarch64-vcpkg-release"
+    },
+    {
+      "name": "default",
+      "configurePreset": "default",
+      "configuration": "Debug"
+    }
+  ]
+}

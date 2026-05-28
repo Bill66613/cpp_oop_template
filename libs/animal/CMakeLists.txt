@@ -1,9 +1,7 @@
 
 cmake_minimum_required(VERSION 4.0.0)
 
-set(PROJECT_NAME Animal)
-
-project(${PROJECT_NAME})
+project(Animal LANGUAGES CXX)
 
 set(LIBRARY_NAME animal)
 
@@ -20,6 +18,12 @@ add_library(${LIBRARY_NAME} SHARED
     ${LIBRARY_SOURCE}
 )
 
+set_target_properties(${LIBRARY_NAME} PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
+
+if(TARGET project_warnings)
+    target_link_libraries(${LIBRARY_NAME} PRIVATE project_warnings)
+endif()
+
 target_include_directories(${LIBRARY_NAME} PRIVATE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/${LIBRARY_NAME}>
     $<INSTALL_INTERFACE:include/${LIBRARY_NAME}>
@@ -27,9 +31,13 @@ target_include_directories(${LIBRARY_NAME} PRIVATE
 
 target_include_directories(${LIBRARY_NAME} PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:include>
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
 
-# add_subdirectory(test)
-set(LIB_DIR /home/nog6hc/workspace/testing/cpp_oop_template/build)
-install (TARGETS ${LIBRARY_NAME} LIBRARY DESTINATION ${LIB_DIR})
+install(
+    TARGETS ${LIBRARY_NAME}
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+)
+install(DIRECTORY include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})

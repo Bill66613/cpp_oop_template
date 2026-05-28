@@ -15,10 +15,13 @@ void SingletonTestClass::Test()
 
 void SingletonTestClass::SetValue(std::string value)
 {
-  value_ = value;
+  std::lock_guard<std::mutex> lock(value_mutex_);
+  value_ = std::move(value);
 }
+
 std::string SingletonTestClass::GetValue() const
 {
+  std::lock_guard<std::mutex> lock(value_mutex_);
   return value_;
 }
 

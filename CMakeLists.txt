@@ -1,68 +1,73 @@
 
-cmake_minimum_required (VERSION 4.0)
-SET(CMAKE_C_COMPILER_WORKS TRUE)
-cmake_policy(SET CMP0048 NEW)
-set(PROJECT_NAME "Test Cpp")
-set(PROJECT_VERSION 1.0.0)
-project(${PROJECT_NAME} VERSION ${PROJECT_VERSION} LANGUAGES CXX)
+cmake_minimum_required(VERSION 4.0)
 
-add_definitions(-DPROJECT_NAME="${PROJECT_NAME}")
-add_definitions(-DPROJECT_VERSION="${PROJECT_VERSION}")
+project("Test Cpp" VERSION 1.0.0 LANGUAGES CXX)
 
-SET(CMAKE_C_COMPILER_WORKS TRUE)
-find_program(CSCOPE cscope)
-find_program(CTAGS ctags)
+include(GNUInstallDirs)
 
-#set(CMAKE_SKIP_BUILD_RPATH FALSE)
-set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
-set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
-set(CMAKE_INSTALL_RPATH "$ORIGIN/lib:$ORIGIN/../lib:$ORIGIN")
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wl,--exclude-libs,ALL")
-#Remove -fstack-clash-protection (Only GCC 8.0 or above) -mmitigate-rop (Only GCC 7.5 or above).
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wformat-security")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wconversion")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wsign-conversion")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wduplicated-cond")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wfloat-equal")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wshadow")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wlogical-not-parentheses")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wnull-dereference")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wdouble-promotion")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wextra")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pie")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIE")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_FORTIFY_SOURCE=2")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wl,--exclude-libs,ALL")
-set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -pthread")
-set(CMAKE_CXX_LINK_EXECUTABLE "${CMAKE_CXX_LINK_EXECUTABLE} -ldl")
+option(CPP_OOP_ENABLE_WARNINGS "Enable the project warning profile" ON)
 
-set(EXECUTABLE_NAME
-    test-cpp
-)
-set(SOURCE_DIR
-    src
-)
-set(SOURCE
-    ${SOURCE_DIR}/main.cc
-)
-set(LIBRARIES_DIR
-    libs
-)
-set(LIBRARIES
-    helper
-    animal
-    sqlite
+add_compile_definitions(
+    PROJECT_NAME="${PROJECT_NAME}"
+    PROJECT_VERSION="${PROJECT_VERSION}"
 )
 
-add_executable(${EXECUTABLE_NAME} ${SOURCE})
+message(STATUS "Host system: ${CMAKE_HOST_SYSTEM_NAME}/${CMAKE_HOST_SYSTEM_PROCESSOR}")
+message(STATUS "Target system: ${CMAKE_SYSTEM_NAME}/${CMAKE_SYSTEM_PROCESSOR}")
 
-foreach(LIBRARY ${LIBRARIES})
-    add_subdirectory("${LIBRARIES_DIR}/${LIBRARY}")
-endforeach(LIBRARY)
+if(CMAKE_CROSSCOMPILING)
+    message(STATUS "Cross-compiling is enabled")
+endif()
 
-target_link_libraries(${EXECUTABLE_NAME} PUBLIC ${CMAKE_DL_LIBS} ${LIBRARIES})
+if(UNIX AND NOT APPLE)
+    set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
+    set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+    set(CMAKE_INSTALL_RPATH "$ORIGIN/lib:$ORIGIN/../lib:$ORIGIN")
+endif()
 
-get_filename_component(PROJ_DIR . ABSOLUTE)
-get_filename_component(PROJ_PAR ../ ABSOLUTE)
+if(CPP_OOP_ENABLE_WARNINGS)
+    add_library(project_warnings INTERFACE)
+
+    if(MSVC)
+        target_compile_options(project_warnings INTERFACE /W4 /permissive-)
+    else()
+        target_compile_options(project_warnings INTERFACE
+            -Wall
+            -Wextra
+            -Wpedantic
+            -Wconversion
+            -Wsign-conversion
+            -Wshadow
+            -Wdouble-promotion
+            -Wformat-security
+            -Wnull-dereference
+        )
+
+        if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+            target_compile_options(project_warnings INTERFACE
+                -Wduplicated-cond
+                -Wfloat-equal
+            )
+        elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+            target_compile_options(project_warnings INTERFACE -Wfloat-equal)
+        endif()
+    endif()
+endif()
+
+add_subdirectory(libs/helper)
+add_subdirectory(libs/animal)
+add_subdirectory(libs/sqlite)
+
+add_executable(test-cpp src/main.cc)
+
+target_link_libraries(test-cpp PRIVATE ${CMAKE_DL_LIBS} helper animal sqlite)
+
+if(TARGET project_warnings)
+    target_link_libraries(test-cpp PRIVATE project_warnings)
+endif()
+
+install(TARGETS test-cpp RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})

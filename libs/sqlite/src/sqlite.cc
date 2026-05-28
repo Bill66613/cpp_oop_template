@@ -1,5 +1,7 @@
 #include <iostream>
+#include <memory>
 #include <string>
+
 #include "sqlite.hh"
 
 /*
@@ -12,41 +14,55 @@
  */
 static int my_special_callback(void *unused, int count, char **data, char **columns)
 {
-  int idx;
-
+  (void)unused;
   printf("There are %d column(s)\n", count);
-
-  for (idx = 0; idx < count; idx++) {
-      printf("The data in column \"%s\" is: %s\n", columns[idx], data[idx]);
+  for (int idx = 0; idx < count; idx++) {
+    printf("The data in column \"%s\" is: %s\n", columns[idx], data[idx]);
   }
-
   printf("\n");
-
   return 0;
 }
 
+// RAII handle so sqlite3* is always closed, even on early return.
+struct Sqlite3Deleter {
+  void operator()(sqlite3 *db) const { sqlite3_close(db); }
+};
+using Sqlite3Ptr = std::unique_ptr<sqlite3, Sqlite3Deleter>;
+
 void SQLiteTest()
 {
-  char* err;
-  sqlite3* db;
-  sqlite3_stmt* stmt;
-  sqlite3_open("my-db.db", &db);
-  char* sql_exec_str;
-  sql_exec_str = "CREATE TABLE IF NOT EXISTS COMPANY("  \
-      "ID INT PRIMARY KEY     NOT NULL," \
-      "NAME           TEXT    NOT NULL," \
-      "AGE            INT     NOT NULL," \
-      "ADDRESS        CHAR(50)," \
-      "SALARY         REAL );";
-  std::string insert_str = "INSERT INTO COMPANY (ID, NAME, AGE, ADDRESS, SALARY) VALUES (2, 'Nam', 26, '446', 1);";
-  auto sql_rc = sqlite3_exec(db, "SELECT * FROM COMPANY", my_special_callback, NULL, &err);
-  if (sql_rc != SQLITE_OK)
-  {
-    std::cout << "SQLite execution error " << err << " with rc: " << sql_rc << std::endl;
+  sqlite3 *raw_db = nullptr;
+  if (sqlite3_open("my-db.db", &raw_db) != SQLITE_OK) {
+    std::cerr << "SQLiteTest: failed to open database: "
+              << sqlite3_errmsg(raw_db) << "\n";
+    sqlite3_close(raw_db);
+    return;
   }
-  else
-  {
-    std::cout << "SQLite execution successful with rc: " << sql_rc << std::endl;
+  Sqlite3Ptr db(raw_db);
+
+  const char *create_sql =
+      "CREATE TABLE IF NOT EXISTS COMPANY("
+      "ID INT PRIMARY KEY NOT NULL,"
+      "NAME TEXT NOT NULL,"
+      "AGE INT NOT NULL,"
+      "ADDRESS CHAR(50),"
+      "SALARY REAL);";
+
+  char *err = nullptr;
+  int rc = sqlite3_exec(db.get(), create_sql, nullptr, nullptr, &err);
+  if (rc != SQLITE_OK) {
+    std::cerr << "SQLiteTest: CREATE TABLE failed: " << err << "\n";
+    sqlite3_free(err);
+    return;
   }
-  sqlite3_close(db);
+
+  err = nullptr;
+  rc = sqlite3_exec(db.get(), "SELECT * FROM COMPANY", my_special_callback, nullptr, &err);
+  if (rc != SQLITE_OK) {
+    std::cerr << "SQLiteTest: SELECT failed: " << err << " (rc=" << rc << ")\n";
+    sqlite3_free(err);
+    return;
+  }
+
+  std::cout << "SQLiteTest: SELECT executed successfully\n";
 }
