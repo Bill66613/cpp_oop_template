@@ -63,13 +63,43 @@ if(CPP_OOP_ENABLE_WARNINGS)
     endif()
 endif()
 
+# ── vcpkg local-tree discovery ───────────────────────────────────────────────
+# When building without the vcpkg toolchain file (native-windows-local,
+# native-linux-local-*), prepend the matching vcpkg_installed triplet tree to
+# CMAKE_PREFIX_PATH so every find_package() resolves vcpkg packages.
+set(CPP_OOP_VCPKG_INSTALLED_DIR "${CMAKE_SOURCE_DIR}/vcpkg_installed"
+    CACHE PATH "Local vcpkg_installed directory used for package discovery")
+
+if(NOT VCPKG_TARGET_TRIPLET)
+    if(WIN32)
+        set(VCPKG_TARGET_TRIPLET "x64-windows")
+    elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+        if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(x86_64|AMD64)$")
+            set(VCPKG_TARGET_TRIPLET "x64-linux")
+        elseif(CMAKE_SYSTEM_PROCESSOR STREQUAL "aarch64")
+            set(VCPKG_TARGET_TRIPLET "arm64-linux")
+        endif()
+    endif()
+endif()
+
+if(VCPKG_TARGET_TRIPLET AND EXISTS "${CPP_OOP_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}")
+    list(PREPEND CMAKE_PREFIX_PATH "${CPP_OOP_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}")
+    message(STATUS "vcpkg local tree: ${CPP_OOP_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}")
+endif()
+
 add_subdirectory(libs/helper)
 add_subdirectory(libs/animal)
 add_subdirectory(libs/sqlite)
+add_subdirectory(libs/greeter)
 
 add_executable(test-cpp src/main.cc)
 
 target_link_libraries(test-cpp PRIVATE ${CMAKE_DL_LIBS} helper animal sqlite)
+
+if(TARGET greeter)
+    target_link_libraries(test-cpp PRIVATE greeter)
+    target_compile_definitions(test-cpp PRIVATE HAVE_GRPC)
+endif()
 
 if(TARGET project_warnings)
     target_link_libraries(test-cpp PRIVATE project_warnings)

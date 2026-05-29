@@ -16,6 +16,10 @@
 #include <animal/animal.hh>
 #include <sqlite/sqlite.hh>
 
+#ifdef HAVE_GRPC
+#include <greeter/greeter_client.hh>
+#endif
+
 #ifndef PROJECT_NAME
 #define PROJECT_NAME "Test Project"
 #endif
@@ -38,5 +42,10 @@ int main(int argc, char const *argv[])
   SQLiteTest();
 
   SingletonTest();
+
+#ifdef HAVE_GRPC
+  GreeterTest();
+#endif
+
   return 0;
 }
